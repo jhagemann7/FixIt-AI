@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FixIt AI - Diagnose Appliance Issues</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; padding: 1rem; }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    textarea { width: 100%; padding: 0.5rem; font-size: 1rem; }
+    input[type="file"] { margin-top: 0.5rem; }
+    button { margin-top: 1.5rem; padding: 0.7rem 1.5rem; font-size: 1rem; cursor: pointer; }
+    #result { margin-top: 2rem; padding: 1rem; background: #f0f0f0; border-radius: 5px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>FixIt AI - Diagnose Appliance Issues</h1>
+
+  <label for="symptom_description">Symptom Description</label>
+  <textarea id="symptom_description" rows="3" placeholder="Describe the problem..."></textarea>
+
+  <label for="file">Upload Image</label>
+  <input type="file" id="file" accept="image/*" />
+
+  <button id="submitBtn">Get Diagnosis</button>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('submitBtn').onclick = async () => {
+      const resultDiv = document.getElementById('result');
+      resultDiv.textContent = "Loading diagnosis...";
+
+      const symptomDescription = document.getElementById('symptom_description').value.trim();
+      const fileInput = document.getElementById('file');
+
+      if (!symptomDescription) {
+        alert("Please enter a symptom description.");
+        resultDiv.textContent = "";
+        return;
+      }
+
+      if (fileInput.files.length === 0) {
+        alert("Please upload an image.");
+        resultDiv.textContent = "";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('symptom_description', symptomDescription);
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/diagnose', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          resultDiv.textContent = 'Error: ' + (error.detail || response.statusText);
+          return;
+        }
+
+        const data = await response.json();
+        resultDiv.textContent = data.diagnosis || "No diagnosis received.";
+      } catch (err) {
+        resultDiv.textContent = "Network error: " + err.message;
+      }
+    };
+  </script>
+</body>
+</html>
